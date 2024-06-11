@@ -1,0 +1,61 @@
+function main() {
+  // Select the input folder
+  var inputDir = Folder.selectDialog('Select the input folder containing PDF files.', '~');
+  if (!inputDir) {
+    alert('No input folder selected. Script will exit.');
+    return;
+  }
+
+  // Select the output folder
+  var outputDir = Folder.selectDialog('Select output folder for PNG files.', '~');
+  if (!outputDir) {
+    alert('No output folder selected. Script will exit.');
+    return;
+  }
+
+  // Get all PDF files in the input folder
+  var pdfFiles = inputDir.getFiles('*.pdf');
+  if (pdfFiles.length === 0) {
+    alert('No PDF files found in the selected input folder.');
+    return;
+  }
+
+  for (var i = 0; i < pdfFiles.length; i++) {
+    var file = pdfFiles[i];
+
+    try {
+      // Open the PDF file
+      var doc = app.open(file);
+      doc.activate();
+
+      // Get the document name without extension
+      var docName = doc.name.replace(/\.[^\.]+$/, '');
+      var fileName = docName + '.png';
+      var outputPath = new File(outputDir + '/' + fileName);
+
+      // Replace forward slashes with backslashes for Windows
+      if ($.os.indexOf('Windows') !== -1) {
+        outputPath = new File(outputDir.fsName + '\\' + fileName);
+      }
+
+      // Set up export options
+      var exportOptions = new ExportOptionsPNG24();
+      exportOptions.artBoardClipping = true;
+      exportOptions.horizontalScale = 100.0; // Export at 100% scale
+      exportOptions.verticalScale = 100.0;   // Export at 100% scale
+
+      // Export the document as PNG
+      doc.exportFile(outputPath, ExportType.PNG24, exportOptions);
+
+      // Close the document without saving changes
+      doc.close(SaveOptions.DONOTSAVECHANGES);
+
+    } catch (e) {
+      alert('Processing of file "' + file.name + '" failed.\n' + e.message);
+    }
+  }
+
+  alert('Success!\nPNG files saved to ' + outputDir);
+}
+
+main();
